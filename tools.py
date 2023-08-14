@@ -8,3 +8,10 @@ async def is_admin(chatid, userid, bot):
             return True
 
     return False
+
+
+async def execute_event(event_id, chat_id, user_id, event_type, additional_info, execution_time, bot):
+    if event_type == "changeTitle":
+        await bot.set_chat_title(chat_id, additional_info)
+        return True
+

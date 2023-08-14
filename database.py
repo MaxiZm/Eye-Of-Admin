@@ -25,7 +25,7 @@ async def create_chat_user_tables():
                       "user_id INT, "
                       "event TEXT, "
                       "additional_info BLOB, "
-                      "date_of_execution DATE"
+                      "date_of_execution TIMESTAMP"
                       ");")
 
     await db.commit()
