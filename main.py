@@ -43,11 +43,51 @@ async def ban(msg):
         await msg.reply(f"забанить не выйдет, так как @{msg.reply_to_message.from_user.username} - админ")
         return
 
+    try:
+        muteint = int(msg.text.split()[1])
+        mutetype = msg.text.split()[2]
+        comment = " ".join(msg.text.split()[3:])
+    except IndexError:
+        await msg.reply('не хватает аргументов!\nПример:\n`/бан 1 ч причина`')
+        return
+
+    date = datetime.now()
+
+    if mutetype in ['м', 'минут', 'минуты', 'минуты']:
+        date += timedelta(minutes=muteint)
+
+    elif mutetype in ['ч', 'часов', 'час', 'часа']:
+        date += timedelta(hours=muteint)
+
+    elif mutetype in ['д', 'день', 'дня', 'дней']:
+        date += timedelta(hours=muteint)
+
+    elif mutetype in ['i', 'inf', 'беск']:
+        pass
+
+    else:
+        msg.reply("некорректное время бана!")
+        return
+
     await asyncio.gather(bot.ban_chat_member(msg.chat.id, msg.reply_to_message.from_user.id),
-                         bot.send_message(msg.chat.id, "мне тебя жаль 😢"))
+                         bot.send_message(msg.chat.id,
+                                          f'<b>забанил:</b> '
+                                          f'{msg.from_user.get_mention(as_html=True)}'
+                                          f'\n<b>анскилл:</b> <a href="tg://user?id='
+                                          f'{msg.reply_to_message.from_user.id}'
+                                          f'">{msg.reply_to_message.from_user.first_name}'
+                                          f'</a>\n<b>срок наказания:</b> {muteint} {mutetype}\n'
+                                          f'<b>причина:</b> {comment}', parse_mode="html"))
     if msg.text.startswith("/dban"):
         await asyncio.gather(bot.delete_message(msg.chat.id, msg.reply_to_message.message_id),
                              bot.delete_message(msg.chat.id, msg.message_id))
+
+    if mutetype not in ['i', 'inf', 'беск']:
+        await db.execute("INSERT INTO events (chat_id, user_id, event, additional_info, date_of_execution) VALUES "
+                         "(?, ?, ?, ?, ?);", (msg.chat.id, msg.from_user.id, "unbanDelay",
+                                              pickle.dumps(msg.reply_to_message.from_user.id), date))
+        await db.commit()
+
 
 
 @dp.message_handler(Command("unban"),
@@ -66,7 +106,7 @@ async def unban(msg):
         await bot.send_message(msg.chat.id,
                                "отправьте ему кто-нибудь ссылку на вступление -> " + (await bot.get_chat(msg.chat.id))[
                                    "invite_link"])
-    await bot.send_message(msg.chat.id, "ура!!!")
+    await bot.send_message(msg.chat.id, f"{msg.reply_to_message.from_user.get_mention(as_html=True)} разбанен", parse_mode="html")
 
 
 @dp.message_handler(commands=['мут', 'mute'], commands_prefix='./', is_chat_admin=True)
@@ -126,7 +166,10 @@ async def create_event(msg):
         await msg.reply("неверное число параметров в сообщении")
 
     event_type = msg.text.split()[1]
-    num = int(msg.text.split()[2])
+    try:
+        num = int(msg.text.split()[2])
+    except ValueError as e:
+        msg.reply("в срок надо вводить число!")
     time_type = msg.text.split()[3]
     info = " ".join(msg.text.split()[4:])
 
@@ -161,7 +204,8 @@ async def event_handler():
                 await db.execute("SELECT event_id, chat_id, user_id, event, additional_info, date_of_execution FROM "
                                  "events WHERE date_of_execution <= ?;",
                                  (datetime.now(),))).fetchall():
-            result = await tools.execute_event(event_id=event[0], chat_id=event[1], user_id=event[2], event_type=event[3],
+            result = await tools.execute_event(event_id=event[0], chat_id=event[1], user_id=event[2],
+                                               event_type=event[3],
                                                additional_info=pickle.loads(event[4]), execution_time=event[5], bot=bot)
             if result:
                 await db.execute("DELETE FROM events WHERE event_id=?", (event[0],))
