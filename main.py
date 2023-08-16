@@ -29,6 +29,34 @@ async def start(msg):
     await bot.send_message(msg.chat.id, "Привет! Я помощник и помогаю администаторам данного чата!")
 
 
+@dp.message_handler(Command("help") | Command("помощь"))
+async def help(msg):
+    await msg.reply(
+        f'''<b>Приветствую, {msg.from_user.get_mention(as_html=True)}!</b>
+        Мы рады видеть вас, как человека, использующего нашего бота!
+        <b>Вот список функций</b> :
+            1) /ban | /dban - банит человека (/dban к тому удаляет его сообщение), ответом на сообщение которого является команда.
+                <i>&lt/ban время тип_времени причина&gt</i>
+                <i>Пример использования:</i> <code>/ban 1 ч мемы в важном</code>
+                Доступные типы времени: <i>м (минута), ч (час), д (день), inf (бесконечность)</i>
+                
+            2) /mute - мутит человека, ответом на сообщение которого является команда.
+                <i>&lt/mute время тип_времени причина&gt</i>
+                <i>Пример использования:</i> <code>/mute 1 ч мемы в важном</code>
+                Доступные типы времени: <i>м (минута), ч (час), д (день)</i>
+                
+            3) /unban - разбанивает человека, ответом на сообщение которого является команда.
+                <i>&lt/unmute&gt</i>
+                <i>Пример использования:</i> <code>/unmute</code>
+                
+            4) /event - создает ивент (по сути откладывает выполнение определенного события).
+                <i>&lt/event тип_ивента время тип_времени доп_информация&gt</i>
+                <i>Пример использования:</i> <code>/event changeTitle 1 ч Лучшая группа</code>
+                Доступные типы ивентов: <i>changeTitle (меняет название группы), unbanDelay (LEGACY разбанивает через определенное время, не должна быть использована)</i>
+                
+        Более подробно про нашего бота можно прочитать <a href="https://github.com/MaxiZm/Eye-Of-Admin">здесь</a>.''',
+    parse_mode="html")
+
 @dp.message_handler(Command("ban") | Command("dban"),
                     ChatTypeFilter(types.ChatType.GROUP) | ChatTypeFilter(types.ChatType.SUPERGROUP),
                     AdminFilter(True), IsReplyFilter(True))
