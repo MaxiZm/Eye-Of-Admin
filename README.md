@@ -6,6 +6,6 @@ It's hosted in telegram by username @eyeofadmin_bot (t.me/eyeofadmin_bot) and of
 
 By now it also includes event system (which makes some actions as change group's title to be delayed);
 
-In plans to add some AI features and make it fun and useful comapnion to help you manage the group :)
+In plans to add some AI features and make it fun and useful companion to help you manage the group :)
 
 
